@@ -25,6 +25,7 @@ export const usePromptAndCommand = () => {
     setAtCommand,
     setIsAssistantPickerOpen,
     setSelectedAssistant,
+    chatSettings,
     setChatSettings,
     setChatFiles
   } = useContext(ChatbotUIContext)
