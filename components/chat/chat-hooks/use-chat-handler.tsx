@@ -110,7 +110,8 @@ export const useChatHandler = () => {
           selectedAssistant.include_workspace_instructions,
         embeddingsProvider: selectedAssistant.embeddings_provider as
           | "openai"
-          | "local"
+          | "local",
+        enableWebSearch: chatSettings?.enableWebSearch ?? false
       })
 
       let allFiles = []
@@ -154,7 +155,8 @@ export const useChatHandler = () => {
           selectedPreset.include_workspace_instructions,
         embeddingsProvider: selectedPreset.embeddings_provider as
           | "openai"
-          | "local"
+          | "local",
+        enableWebSearch: chatSettings?.enableWebSearch ?? false
       })
     } else if (selectedWorkspace) {
       // setChatSettings({
@@ -272,7 +274,11 @@ export const useChatHandler = () => {
 
       let generatedText = ""
 
-      if (selectedTools.length > 0) {
+      // Use tools route if user selected tools OR if web search is enabled
+      const useToolsRoute =
+        selectedTools.length > 0 || chatSettings?.enableWebSearch
+
+      if (useToolsRoute) {
         setToolInUse("Tools")
 
         const formattedMessages = await buildFinalMessages(

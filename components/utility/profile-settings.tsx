@@ -12,6 +12,7 @@ import { fetchOpenRouterModels } from "@/lib/models/fetch-models"
 import { LLM_LIST_MAP } from "@/lib/models/llm/llm-list"
 import { supabase } from "@/lib/supabase/browser-client"
 import { cn } from "@/lib/utils"
+import { isValidUrl } from "@/lib/utils/validate-url"
 import { OpenRouterLLM } from "@/types"
 import {
   IconCircleCheckFilled,
@@ -118,6 +119,24 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     profile?.openrouter_api_key || ""
   )
 
+  // Tavily API key state
+  const [tavilyAPIKey, setTavilyAPIKey] = useState(
+    profile?.tavily_api_key || ""
+  )
+
+  // OpenAI-compatible provider state
+  const [openaiCompatibleAPIKey, setOpenaiCompatibleAPIKey] = useState(
+    profile?.openai_compatible_api_key || ""
+  )
+  const [openaiCompatibleBaseURL, setOpenaiCompatibleBaseURL] = useState(
+    profile?.openai_compatible_base_url || ""
+  )
+  const [openaiCompatibleModelName, setOpenaiCompatibleModelName] = useState(
+    profile?.openai_compatible_model_name || ""
+  )
+  const [openaiCompatibleBaseURLError, setOpenaiCompatibleBaseURLError] =
+    useState("")
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/login")
@@ -157,7 +176,11 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       azure_openai_45_turbo_id: azureOpenai45TurboID,
       azure_openai_45_vision_id: azureOpenai45VisionID,
       azure_openai_embeddings_id: azureEmbeddingsID,
-      openrouter_api_key: openrouterAPIKey
+      openrouter_api_key: openrouterAPIKey,
+      openai_compatible_api_key: openaiCompatibleAPIKey,
+      openai_compatible_base_url: openaiCompatibleBaseURL,
+      openai_compatible_model_name: openaiCompatibleModelName,
+      tavily_api_key: tavilyAPIKey
     })
 
     setProfile(updatedProfile)
@@ -172,7 +195,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       "mistral",
       "groq",
       "perplexity",
-      "openrouter"
+      "openrouter",
+      "openai-compatible"
     ]
 
     providers.forEach(async provider => {
@@ -182,6 +206,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
         providerKey = "google_gemini_api_key"
       } else if (provider === "azure") {
         providerKey = "azure_openai_api_key"
+      } else if (provider === "openai-compatible") {
+        providerKey = "openai_compatible_api_key"
       } else {
         providerKey = `${provider}_api_key` as keyof typeof profile
       }
@@ -191,6 +217,12 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
       if (!envKeyActive) {
         const hasApiKey = !!updatedProfile[providerKey]
+
+        // For openai-compatible, also check if base URL is configured
+        const isOpenAICompatibleConfigured =
+          provider === "openai-compatible"
+            ? hasApiKey && !!updatedProfile.openai_compatible_base_url
+            : hasApiKey
 
         if (provider === "openrouter") {
           if (hasApiKey && availableOpenRouterModels.length === 0) {
@@ -207,7 +239,12 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
             setAvailableOpenRouterModels([])
           }
         } else {
-          if (hasApiKey && Array.isArray(models)) {
+          const shouldShowModels =
+            provider === "openai-compatible"
+              ? isOpenAICompatibleConfigured
+              : hasApiKey
+
+          if (shouldShowModels && Array.isArray(models)) {
             setAvailableHostedModels(prev => {
               const newModels = models.filter(
                 model =>
@@ -215,7 +252,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
               )
               return [...prev, ...newModels]
             })
-          } else if (!hasApiKey && Array.isArray(models)) {
+          } else if (!shouldShowModels && Array.isArray(models)) {
             setAvailableHostedModels(prev =>
               prev.filter(model => !models.includes(model))
             )
@@ -723,6 +760,90 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                   </>
                 )}
               </div>
+
+              {/* OpenAI-Compatible Provider Section */}
+              <div className="space-y-3 rounded-md border p-3">
+                <Label className="text-sm font-medium">
+                  OpenAI-Compatible Provider
+                </Label>
+                <p className="text-muted-foreground text-xs">
+                  Connect to self-hosted or third-party AI services (LM Studio,
+                  LocalAI, Ollama, vLLM, etc.)
+                </p>
+
+                <div className="space-y-1">
+                  <Label>API Key</Label>
+                  <Input
+                    placeholder="API Key (optional for some providers)"
+                    type="password"
+                    value={openaiCompatibleAPIKey}
+                    onChange={e => setOpenaiCompatibleAPIKey(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Base URL</Label>
+                  <Input
+                    placeholder="http://localhost:1234/v1"
+                    value={openaiCompatibleBaseURL}
+                    onChange={e => {
+                      const value = e.target.value
+                      setOpenaiCompatibleBaseURL(value)
+                      if (value && !isValidUrl(value)) {
+                        setOpenaiCompatibleBaseURLError(
+                          "Please enter a valid URL (e.g., http://localhost:1234/v1)"
+                        )
+                      } else {
+                        setOpenaiCompatibleBaseURLError("")
+                      }
+                    }}
+                  />
+                  {openaiCompatibleBaseURLError && (
+                    <p className="text-xs text-red-500">
+                      {openaiCompatibleBaseURLError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Model Name</Label>
+                  <Input
+                    placeholder="gpt-3.5-turbo (default if empty)"
+                    value={openaiCompatibleModelName}
+                    onChange={e => setOpenaiCompatibleModelName(e.target.value)}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    The model name to use in API requests
+                  </p>
+                </div>
+              </div>
+
+              {/* Tavily Web Search Section */}
+              <div className="space-y-3 rounded-md border p-3">
+                <Label className="text-sm font-medium">Tavily Web Search</Label>
+                <p className="text-muted-foreground text-xs">
+                  Enable web search capabilities for your chatbot using Tavily
+                  AI Search API.{" "}
+                  <a
+                    href="https://tavily.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Get your API key
+                  </a>
+                </p>
+
+                <div className="space-y-1">
+                  <Label>Tavily API Key</Label>
+                  <Input
+                    placeholder="Tavily API Key"
+                    type="password"
+                    value={tavilyAPIKey}
+                    onChange={e => setTavilyAPIKey(e.target.value)}
+                  />
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
@@ -752,7 +873,11 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
               Cancel
             </Button>
 
-            <Button ref={buttonRef} onClick={handleSave}>
+            <Button
+              ref={buttonRef}
+              onClick={handleSave}
+              disabled={!!openaiCompatibleBaseURLError}
+            >
               Save
             </Button>
           </div>

@@ -115,7 +115,8 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
             selectedWorkspace.include_workspace_instructions,
           embeddingsProvider: selectedWorkspace.embeddings_provider as
             | "openai"
-            | "local"
+            | "local",
+          enableWebSearch: chatSettings?.enableWebSearch ?? false
         })
       }
       return
@@ -128,7 +129,8 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
       contextLength: item.context_length,
       includeProfileContext: item.include_profile_context,
       includeWorkspaceInstructions: item.include_workspace_instructions,
-      embeddingsProvider: item.embeddings_provider as "openai" | "local"
+      embeddingsProvider: item.embeddings_provider as "openai" | "local",
+      enableWebSearch: chatSettings?.enableWebSearch ?? false
     })
   }
 

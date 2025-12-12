@@ -187,6 +187,15 @@ export const handleLocalChat = async (
   )
 }
 
+/**
+ * Handles chat requests for hosted providers including:
+ * - openai, anthropic, google, mistral, groq, perplexity, openrouter
+ * - openai-compatible (custom base URL with OpenAI-compatible API)
+ * - azure (when use_azure_openai is enabled)
+ * - custom (user-defined models)
+ *
+ * Routes requests to the appropriate API endpoint based on provider.
+ */
 export const handleHostedChat = async (
   payload: ChatPayload,
   profile: Tables<"profiles">,
@@ -201,6 +210,7 @@ export const handleHostedChat = async (
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
+  // Determine the provider - special case for Azure OpenAI
   const provider =
     modelData.provider === "openai" && profile.use_azure_openai
       ? "azure"
@@ -208,13 +218,19 @@ export const handleHostedChat = async (
 
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
-  let formattedMessages : any[] = []
+  // Google Gemini requires special message formatting
+  let formattedMessages: any[] = []
   if (provider === "google") {
-    formattedMessages = await adaptMessagesForGoogleGemini(payload, draftMessages)
+    formattedMessages = await adaptMessagesForGoogleGemini(
+      payload,
+      draftMessages
+    )
   } else {
     formattedMessages = draftMessages
   }
 
+  // Route to the appropriate API endpoint
+  // Most providers use /api/chat/{provider} pattern (including openai-compatible)
   const apiEndpoint =
     provider === "custom" ? "/api/chat/custom" : `/api/chat/${provider}`
 

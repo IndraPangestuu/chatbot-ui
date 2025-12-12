@@ -43,6 +43,18 @@ export const fetchHostedModels = async (profile: Tables<"profiles">) => {
       }
     }
 
+    // Handle OpenAI-compatible provider separately
+    // Requires both API key and base URL to be configured
+    if (
+      profile?.openai_compatible_api_key &&
+      profile?.openai_compatible_base_url
+    ) {
+      const openaiCompatibleModels = LLM_LIST_MAP["openai-compatible"]
+      if (Array.isArray(openaiCompatibleModels)) {
+        modelsToAdd.push(...openaiCompatibleModels)
+      }
+    }
+
     return {
       envKeyMap: data.isUsingEnvKeyMap,
       hostedModels: modelsToAdd

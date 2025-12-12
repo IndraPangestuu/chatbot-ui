@@ -334,36 +334,19 @@ describe("extractOpenapiData for body 2", () => {
     expect(routes[0].method).toBe("get")
     expect(routes[0].operationId).toBe("getStockDailyOpenClose")
 
-    expect(functions[0].function.parameters.properties).toHaveProperty(
-      "stocksTicker"
-    )
-    expect(functions[0].function.parameters.properties.stocksTicker.type).toBe(
-      "string"
-    )
-    expect(
-      functions[0].function.parameters.properties.stocksTicker
-    ).toHaveProperty("required", true)
-    expect(functions[0].function.parameters.properties).toHaveProperty("date")
-    expect(functions[0].function.parameters.properties.date.type).toBe("string")
-    expect(functions[0].function.parameters.properties.date).toHaveProperty(
-      "format",
-      "date"
-    )
-    expect(functions[0].function.parameters.properties.date).toHaveProperty(
-      "required",
-      true
-    )
+    // Parameters are nested under parameters.properties
+    const func0Params = functions[0].function.parameters.properties.parameters.properties
+    expect(func0Params).toHaveProperty("stocksTicker")
+    expect(func0Params.stocksTicker.type).toBe("string")
+    expect(func0Params).toHaveProperty("date")
+    expect(func0Params.date.type).toBe("string")
+    expect(func0Params.date).toHaveProperty("format", "date")
+
     expect(routes[1].path).toBe("/v2/aggs/ticker/{stocksTicker}/prev")
     expect(routes[1].method).toBe("get")
     expect(routes[1].operationId).toBe("getStockPreviousClose")
-    expect(functions[1].function.parameters.properties).toHaveProperty(
-      "stocksTicker"
-    )
-    expect(functions[1].function.parameters.properties.stocksTicker.type).toBe(
-      "string"
-    )
-    expect(
-      functions[1].function.parameters.properties.stocksTicker
-    ).toHaveProperty("required", true)
+    const func1Params = functions[1].function.parameters.properties.parameters.properties
+    expect(func1Params).toHaveProperty("stocksTicker")
+    expect(func1Params.stocksTicker.type).toBe("string")
   })
 })

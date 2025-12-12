@@ -221,6 +221,37 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
         )}
       </div>
 
+      {profile?.tavily_api_key && (
+        <div className="mt-4 flex items-center space-x-2">
+          <Checkbox
+            checked={chatSettings.enableWebSearch}
+            onCheckedChange={(value: boolean) =>
+              onChangeChatSettings({
+                ...chatSettings,
+                enableWebSearch: value
+              })
+            }
+          />
+
+          <Label>Enable Web Search</Label>
+
+          {showTooltip && (
+            <WithTooltip
+              delayDuration={0}
+              display={
+                <div className="w-[400px] p-3">
+                  Allow the AI to search the web for current information using
+                  Tavily.
+                </div>
+              }
+              trigger={
+                <IconInfoCircle className="cursor-hover:opacity-50" size={16} />
+              }
+            />
+          )}
+        </div>
+      )}
+
       <div className="mt-5">
         <Label>Embeddings Provider</Label>
 
